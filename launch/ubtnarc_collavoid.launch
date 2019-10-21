@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+  <!--ubtnarc_collavoid Node filtering cmd_vel-->
+  <node pkg="ubtnarc_collavoid" type="collision_avoidance" name="collision_avoidance_node" respawn="false"  output="screen"/>
+</launch>
