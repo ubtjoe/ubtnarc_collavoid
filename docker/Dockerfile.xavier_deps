@@ -1,0 +1,43 @@
+FROM ros:kinetic-ros-base-xenial
+
+ARG username=collavoid
+ARG groupid=1000
+ARG userid=1000
+
+# USE BASH
+SHELL ["/bin/bash", "-c"]
+
+# RUN LINE BELOW TO REMOVE debconf ERRORS (MUST RUN BEFORE ANY apt-get CALLS)
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
+
+RUN apt-get update && apt-get install -y --fix-missing cmake pkg-config git wget \
+    build-essential libboost-all-dev zip libeigen3-dev
+
+#### INSTALL ROS DESKTOP
+RUN apt-get install -y ros-kinetic-desktop-full ros-kinetic-rqt-* ros-kinetic-tf2-tools ros-kinetic-tf
+RUN apt-get install -y python-rosinstall
+#### add utilities for networking and connections
+RUN apt-get update && apt-get install --fix-missing -y net-tools iputils-ping vim sudo
+
+# setup user env at the end
+# -m option creates a fake writable home folder
+RUN adduser --disabled-password --gecos '' $username
+RUN adduser $username sudo
+RUN adduser $username dialout
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# INSTALL NLOHMANN_JSON (downloaded from github)
+RUN wget https://github.com/nlohmann/json/archive/release/3.7.0.zip \
+    && unzip 3.7.0.zip
+RUN cd json* && mkdir build && cd build \
+    && cmake .. \
+    && make -j2 && make install
+
+USER $username
+RUN echo "source /opt/ros/kinetic/setup.bash" >> /home/$username/.bashrc
+
+RUN mkdir -p /home/$username/catkin_ws/src
+
+WORKDIR /home/$username
