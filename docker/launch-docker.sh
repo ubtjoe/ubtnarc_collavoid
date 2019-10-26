@@ -17,8 +17,8 @@ export PATH_TO_SRC=$2
 # end arguments
 
 export CONT_USER_ID=collavoid
-#export ROS_HOSTNAME=$(ifconfig wlan0 | awk '/inet / {print $2}')  # XXX for Jetson networking
-export ROS_HOSTNAME=$(ifconfig wlp3s0 | awk '/inet / {print $2}')  # XXX for Jetson networking
+export ROS_HOSTNAME=$(ifconfig wlan0 | awk '/inet / {print $2}')  # XXX for Jetson networking
+#export ROS_HOSTNAME=$(ifconfig wlp3s0 | awk '/inet / {print $2}')  # XXX for Joe's machine network
 
 docker run -i -t --rm \
     --env DISPLAY=$DISPLAY \
@@ -29,9 +29,9 @@ docker run -i -t --rm \
     -v /etc/localtime:/etc/localtime:ro \
     -v /dev:/dev \
     -v $PATH_TO_SRC:/home/$CONT_USER_ID/catkin_ws/src/ubtnarc_collavoid \
-    --name collavoid-deps-c \
+    --name iserv-collavoid-deps-c \
     --privileged \
     --network=host \
     --env "ROS_MASTER_URI=http://$ROS_MASTER_URI:11311" \
     --env "ROS_HOSTNAME=$ROS_HOSTNAME" \
-    collavoid-deps
+    iserv-collavoid-deps

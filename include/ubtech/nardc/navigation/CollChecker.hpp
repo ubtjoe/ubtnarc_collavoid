@@ -61,15 +61,14 @@ class CollChecker {
 CollChecker::CollChecker(ros::NodeHandle t_handle, ros::NodeHandle t_phandle) {
   m_nh = t_handle;
   t_phandle.param<double>("lookahead_time", m_lookahead_time, 1.0); 
-  t_phandle.param<double>("lookahead_dt", m_dt, 0.1); 
-  t_phandle.param<double>("veh_length", m_length, 1.0); // TODO(jwd) - measure
-  t_phandle.param<double>("veh_width", m_width, 1.0);  // TODO(jwd) - measure
-
-  m_odom_sub = m_nh.subscribe<nav_msgs::Odometry>("odom", 20,
+  t_phandle.param<double>("lookahead_dt", m_dt, 0.2); 
+  t_phandle.param<double>("veh_length", m_length, 0.84);
+  t_phandle.param<double>("veh_width", m_width, 0.5);
+  m_odom_sub = m_nh.subscribe<nav_msgs::Odometry>("base/odom", 200,
           &CollChecker::odom_callback, this);
-  m_tf_sub = m_nh.subscribe<tf2_msgs::TFMessage>("tf_static", 20,
+  m_tf_sub = m_nh.subscribe<tf2_msgs::TFMessage>("tf_static", 200,
           &CollChecker::tf_callback, this);
-  m_rdata_sub = m_nh.subscribe<sensor_msgs::LaserScan>("scan_filtered", 20,
+  m_rdata_sub = m_nh.subscribe<sensor_msgs::LaserScan>("scan_filtered", 200,
           &CollChecker::rdata_callback, this);
 }
 
@@ -85,28 +84,30 @@ void CollChecker::tf_callback(const tf2_msgs::TFMessage::ConstPtr& tf_msg_in) {
       tf::Matrix3x3 m(q);
       geometry_msgs::Vector3 ang;
       m.getRPY(ang.x, ang.y, m_P_laser.z);
-      //std::cout<<m_P_laser.x<<" "<<m_P_laser.y<<" "<<m_P_laser.z<<std::endl;
       break;
     }
   }
 }
 
 void CollChecker::odom_callback(const nav_msgs::Odometry::ConstPtr& odom_msg) {
-  auto const twist = odom_msg->twist.twist;
-  auto const vx = twist.linear.x;
-  auto const vy = twist.linear.y;
+  geometry_msgs::Twist const twist = odom_msg->twist.twist;
+  double const vx = twist.linear.x;
+  double const vy = twist.linear.y;
   m_linear_vel = sqrt(vx*vx + vy*vy);
   m_angular_vel = twist.angular.z;
 }
 
 void CollChecker::rdata_callback(const sensor_msgs::LaserScan::ConstPtr& t_rdata_msg){
+  m_ranging_data.resize(0);
   auto const & angle_min = t_rdata_msg->angle_min;
   auto const & angle_max = t_rdata_msg->angle_max;
   auto const & angle_increment = t_rdata_msg->angle_increment;
   for (size_t i = 0; i < t_rdata_msg->ranges.size(); ++i){	
-    auto const ang = angle_min + angle_increment * static_cast<double>(i);
-    m_ranging_data[i] = point_t(t_rdata_msg->ranges[i]*std::cos(ang),
-          t_rdata_msg->ranges[i]*std::sin(ang));
+    if (!std::isnan(t_rdata_msg->ranges[i])) {
+      auto const ang = angle_min + angle_increment * static_cast<double>(i);
+      m_ranging_data.emplace_back(point_t(t_rdata_msg->ranges[i]*std::cos(ang),
+            t_rdata_msg->ranges[i]*std::sin(ang)));
+    }
   }
 }
 
@@ -134,11 +135,11 @@ bool CollChecker::is_safe() noexcept {
   double theta = 0;
 
   polygon_t poly;
-  bg::append(poly.outer(), point_t(-0.5*m_width, 0.5*m_length));  // top-left
-  bg::append(poly.outer(), point_t(0.5*m_width, 0.5*m_length));  // top-right
-  bg::append(poly.outer(), point_t(0.5*m_width, -0.5*m_length));  // bottom-right
-  bg::append(poly.outer(), point_t(-0.5*m_width, -0.5*m_length));  // bottom-left
-  bg::append(poly.outer(), point_t(-0.5*m_width, 0.5*m_length));  // closure
+  bg::append(poly.outer(), point_t(0.5*m_width, 0.5*m_length));  // top-left
+  bg::append(poly.outer(), point_t(0.5*m_width, -0.5*m_length));  // top-right
+  bg::append(poly.outer(), point_t(-0.5*m_width, -0.5*m_length));  // bottom-right
+  bg::append(poly.outer(), point_t(-0.5*m_width, 0.5*m_length));  // bottom-left
+  bg::append(poly.outer(), point_t(0.5*m_width, 0.5*m_length));  // closure
 
   CollisionChecker cc(/* check radius = */ 5);
   cc.set_points(m_ranging_data);
@@ -153,9 +154,10 @@ bool CollChecker::is_safe() noexcept {
     //! update transformation
     auto const Tnew = get_motion_transform(theta);
     T = Tnew*T;
-    theta += m_linear_vel * m_dt;
+    theta += m_angular_vel * m_dt;
     time += m_dt;
   }
+  //! no collision detected
   return true;
 }
 }  // end namespace navigation

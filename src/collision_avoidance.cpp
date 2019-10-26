@@ -21,16 +21,16 @@ int main(int argc, char** argv){
   ubnn::CollChecker cc(nh, pnh);
 
   ubtnarc_collavoid::collavoid msg;
-  ros::Publisher pub = nh.advertise<ubtnarc_collavoid::collavoid>("collision_avoidance", 10);
+  ros::Publisher pub = nh.advertise<ubtnarc_collavoid::collavoid>("collision_avoidance", 100);
 
   while(ros::ok()){
     // check if all-clear
+    ros::spinOnce();  // process callbacks
     auto const current_time = ros::Time::now();
     msg.all_clear = cc.is_safe();
     ROS_WARN("collision checker took %fmsec", 1000.*(ros::Time::now().toSec() - current_time.toSec()));
     msg.header.stamp = current_time;
     pub.publish(msg);
-    ros::spinOnce();
     loop_rate.sleep();
   }	
 }

@@ -1,5 +1,13 @@
 <?xml version="1.0"?>
 <launch>
   <!--ubtnarc_collavoid Node filtering cmd_vel-->
-  <node pkg="ubtnarc_collavoid" type="collision_avoidance" name="collision_avoidance_node" respawn="false"  output="screen"/>
+  <node pkg="ubtnarc_collavoid" type="ubtnarc_collavoid_node" name="ubtnarc_collavoid_node" respawn="false" output="screen">
+    <param name="rate" value="50"/>
+    <!-- TESTING VALUES -->
+    <param name="lookahead_time" value="100.0"/>
+    <param name="lookahead_dt" value="0.5"/>
+    <param name="veh_length" value="0.05"/>
+    <param name="veh_width" value="0.05"/>
+    <!-- END TESTING VALUES -->
+  </node>
 </launch>
