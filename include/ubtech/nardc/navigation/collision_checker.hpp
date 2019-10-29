@@ -83,12 +83,26 @@ class CollisionChecker {
      /**
       * set_points(points_t const &)
       *
+      * @brief set points to the map
+      *
+      * @param[in] points set of (x, y) points to put into collision checker
+      * @returns void
+      */
+     void set_points(points_t const & points) { points_ = points; }
+
+     /**
+      * add_points(points_t const &)
+      *
       * @brief add points to the map
       *
       * @param[in] points set of (x, y) points to add to collision checker
       * @returns void
       */
-     void set_points(points_t const & points) { points_ = points; }
+     void add_points(points_t const & points) {
+       for (auto const & p : points) {
+         points_.emplace_back(p);
+       }
+     }
 
      /**
       * check_intersection(polygon_t const&, Eigen::Matrix3d const&) const
@@ -139,9 +153,25 @@ class CollisionChecker {
          //! check point intersections (return true if point is inside of the query polygon)
          point_t qp_centroid;
          bg::centroid(query_polygon, qp_centroid);
+         std::cout << "CCHECKER: " << points_.size() << std::endl;
+         size_t ctr = 0;
          for (auto const & p : points_) {
+             //std::cout << "checking pt: " << ctr++ << std::endl;
+             /*std::cout << "Point" << std::endl;
+                 std::cout << bg::get<0>(p) << std::endl;
+                 std::cout << bg::get<1>(p) << std::endl;*/
              if (bg::distance(p, qp_centroid) <= checker_radius_
                      && bg::within(p, query_polygon)) {
+             /*std::cout << "Intersection Point" << std::endl;
+                 std::cout << bg::get<0>(p) << std::endl;
+                 std::cout << bg::get<1>(p) << std::endl;
+                 auto const & poly2 = query_polygon;
+std::cout << "poly2's coordinates:" << std::endl;
+    for (unsigned i = 0; i != poly2.outer().size(); ++i) {
+        double x = boost::geometry::get<0>(poly2.outer()[i]);
+        double y = boost::geometry::get<1>(poly2.outer()[i]);
+        std::cout << " " << x << ", " << y << std::endl;
+    }*/
                  return true;
              }
          }

@@ -2,12 +2,12 @@
 <launch>
   <!--ubtnarc_collavoid Node filtering cmd_vel-->
   <node pkg="ubtnarc_collavoid" type="ubtnarc_collavoid_node" name="ubtnarc_collavoid_node" respawn="false" output="screen">
-    <param name="rate" value="50"/>
+    <param name="rate" value="30"/>
     <!-- TESTING VALUES -->
-    <param name="lookahead_time" value="100.0"/>
-    <param name="lookahead_dt" value="0.5"/>
-    <param name="veh_length" value="0.05"/>
-    <param name="veh_width" value="0.05"/>
+    <param name="lookahead_time" value="1.0"/>
+    <param name="lookahead_dt" value="0.2"/>
+    <param name="veh_length" value="0.84"/>
+    <param name="veh_width" value="0.494"/>
     <!-- END TESTING VALUES -->
   </node>
 </launch>

@@ -28,7 +28,7 @@ int main(int argc, char** argv){
     ros::spinOnce();  // process callbacks
     auto const current_time = ros::Time::now();
     msg.all_clear = cc.is_safe();
-    ROS_WARN("collision checker took %fmsec", 1000.*(ros::Time::now().toSec() - current_time.toSec()));
+    ROS_WARN("collision checker took %fmsec: all_clear? %d", 1000.*(ros::Time::now().toSec() - current_time.toSec()), static_cast<int>(msg.all_clear));
     msg.header.stamp = current_time;
     pub.publish(msg);
     loop_rate.sleep();
